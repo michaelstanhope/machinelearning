@@ -1,0 +1,96 @@
+Building a Prediction Model for Quantified Self Movement
+========================================================
+
+### Executive Summary
+
+Using devices such as Jawbone Up, Nike FuelBand, and Fitbit it is now possible to collect a large amount of data about personal activity relatively inexpensively. These type of devices are part of the quantified self movement – a group of enthusiasts who take measurements about themselves regularly to improve their health, to find patterns in their behavior, or because they are tech geeks. One thing that people regularly do is quantify how much of a particular activity they do, but they rarely quantify how well they do it.
+
+Data was collected from accelerometers on the belt, forearm, arm, and dumbell of 6 participants. They were asked to perform barbell lifts correctly and incorrectly in 5 different ways. More information is available from the website here: http://groupware.les.inf.puc-rio.br/har (see the section on the Weight Lifting Exercise Dataset). 
+
+Using the accelerometer data, we build a prediction model that predicts the class of the barbell lift. The class represents a particular style of lift, with different styles having an effect on the effectiveness and safety of the exercsie. Random forests are used to create the final model, which has an out-of-sample accuracy of 99%.
+
+### Loading and partitioning the data
+
+```{r, echo=FALSE}
+setwd("/Users/michaelstanhope/datascience/machinelearning/")
+```
+
+First, we load the caret and randomForest libraries. 
+
+```{r, message=FALSE, warning=FALSE}
+library(caret)
+library(randomForest)
+```
+
+Then the training and test data sets are loaded. The training data for this project is available here: 
+
+https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv
+
+The test data is available here: 
+
+https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv
+
+```{r}
+trainingSet <- read.csv("pml-training.csv", na.strings=c("NA","#DIV/0!"))
+testingSet <- read.csv ("pml-testing.csv")
+set.seed(1)
+```
+
+We split the training data set into 2 parts:
+* a training component used to train the model and
+* a validation component used to estimate the out-of-sample error
+
+```{r}
+inTrain <- createDataPartition(trainingSet$classe, p = 0.6, list=FALSE)
+training <- trainingSet[inTrain,]
+validation <- trainingSet[-inTrain,]
+```
+
+We dedicate 60% of the data to training and 40% to validation.
+
+### Preprocessing the data
+
+We then remove metadata columns from the training set (timestamps, participant names etc.) that should not be used in the model. 
+
+```{r}
+# Remove metadata columns that I know shouldn't be part of the model
+columnsToRemove <- c("X","user_name","raw_timestamp_part_1","raw_timestamp_part_2","cvtd_timestamp","new_window","num_window")
+columnsToKeep <- setdiff(names(training),columnsToRemove)
+training <- training[,columnsToKeep]
+```
+
+We also remove columns that are sparsely populated at this point. We pick a threshold of 0.95 and decide to only consider columns where the fraction of null or NA values in the column is below the threshold. It would normally be sensible to remove columns with near-zero variance at this point, but this has already been done by removing the sparsely populated columns and therefore, has no effect in this case.
+
+```{r}
+# Remove columns that are mainly NA or have near-zero variance
+populatedCols <- !apply(training, 2, function(x) (sum(is.na(x)) > (0.95 * dim(training)[1])))
+training <- training[,populatedCols]
+# training <- training[,!nearZeroVar(training)]
+training$classe <- as.factor(training$classe)
+```
+
+The final training component has 53 columns (52 predictors) that we will use to train a model.
+
+### Building a model
+
+We then use the reduced training component to train a model. We choose to use random forests with the default number of trees.
+
+```{r, cache=TRUE}
+model <- randomForest(classe ~ ., data = training)
+```
+
+### Evaluating the in-sample error
+
+Evaluation the in-sample error, we see that we have an accuracy of 100%. This is not surprising as the values that we are predicting were used to train the model. More important is the out-of-sample error.
+
+```{r}
+confusionMatrix(training$classe, predict(model, training))
+```
+
+### Evaluating the out-of-sample error
+
+Evaluating the out-of-sample error, we see that we have an accuracy of 99%. Therefore, for the 40% of data that was set aside and not used to train the model, we can predict the class of exercise very accurately. This is encouraging considering the fact that only one model was tested.
+
+```{r}
+confusionMatrix(validation$classe, predict(model, validation))
+```
