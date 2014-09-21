@@ -7,7 +7,7 @@ Using devices such as Jawbone Up, Nike FuelBand, and Fitbit it is now possible t
 
 Data was collected from accelerometers on the belt, forearm, arm, and dumbell of 6 participants. They were asked to perform barbell lifts correctly and incorrectly in 5 different ways. More information is available from the website here: http://groupware.les.inf.puc-rio.br/har (see the section on the Weight Lifting Exercise Dataset). 
 
-Using the accelerometer data, we build a prediction model that predicts the class of the barbell lift. The class represents a particular style of lift, with different styles having an effect on the effectiveness and safety of the exercsie. Random forests are used to create the final model, which has an out-of-sample accuracy of 99%.
+Using the accelerometer data, we build a prediction model that predicts the class of the barbell lift. The class represents a particular style of lift, with different styles having an effect on the effectiveness and safety of the exercsie. Random forests are used to create the final model, which has an out-of-sample accuracy of 99.5%.
 
 ### Loading and partitioning the data
 
@@ -128,7 +128,7 @@ confusionMatrix(training$classe, predict(model, training))
 
 ### Evaluating the out-of-sample error
 
-Evaluating the out-of-sample error, we see that we have an accuracy of 99%. Therefore, for the 40% of data that was set aside and not used to train the model, we can predict the class of exercise very accurately. This is encouraging considering the fact that only one model was tested.
+Evaluating the out-of-sample error, we see that we have an accuracy of 99.5%. Therefore, for the 40% of data that was set aside and not used to train the model, we can predict the class of exercise very accurately. This is encouraging considering the fact that only one model was tested.
 
 
 ```r
